@@ -2,12 +2,12 @@
 Adafruit_MPL3115A2 baro;
 
 float seaLevelPressure = 1013.26; //needs config
-myBaro::myBaro(){}; //emtpy constructer
+myBaro::myBaro(){}; //emtpy constructor
 
 void myBaro::baroStart(){
   //waits until baro has started to continue
   if(!baro.begin()){
-    Serial.println("Error: Berometer couldn't start"); 
+    Serial.println("Error: Barometer couldn't start"); 
     while(1){delay(10);};
   }
    

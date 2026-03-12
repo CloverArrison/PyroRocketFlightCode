@@ -9,7 +9,7 @@ class myBuzz : public Buzzer{
 
 public:
   myBuzz(int thePin);     // Setup buzzer with pin
-  void buzzIdle();        // Funtions to run short buzzers sounds
+  void buzzIdle();        // Functions to run short buzzers sounds
   void buzzStart();
   void buzzGPSfix();
   void initBuzzer();

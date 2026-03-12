@@ -2,10 +2,10 @@
 #include "DATA.h"
 
 Chrono batteryCheckTimer;
-int Batpin;
+int BatPin;
 
 myBat::myBat(int thePin){
-  Batpin = thePin;
+  BatPin = thePin;
 }
 
 float myBat::getBattVoltage(){

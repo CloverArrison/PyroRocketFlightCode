@@ -3,7 +3,7 @@
 
 //pins for all of the peripherals on the Pyro Board
 #define radioPin A3           // LoRa radio cs
-#define buzzPin 9             // Pezoelectric buzzer
+#define buzzPin 9             // Piezoelectric buzzer
 #define flashPin A5           // Soldered flash chip
 #define RledPin LED_BUILTIN   //13
 #define GledPin 8             // Built in green LED

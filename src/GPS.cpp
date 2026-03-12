@@ -10,7 +10,7 @@ uint32_t timer = millis();
 float lat0;
 float lon0;
 float cosLat0;
-static float earthr = 6.378 * (10 ^ 6);
+static float earthRadius = 6.378 * (10 ^ 6);
 
 myGPS::myGPS(){};
 
@@ -57,11 +57,11 @@ void myGPS::GPSaltitude() {
 }
 //return GPS x
 void myGPS::GPSx() {
-  data.gpsx = (GPS.longitude * cosLat0 * earthr);  // - (lon0* std::cos(cosLat0) * earthr);
+  data.gpsx = (GPS.longitude * cosLat0 * earthRadius);  // - (lon0* std::cos(cosLat0) * earthRadius);
 }
 //return GPS y
 void myGPS::GPSy() {
-  data.gpsy = (earthr * GPS.latitude) - (earthr * lat0);
+  data.gpsy = (earthRadius * GPS.latitude) - (earthRadius * lat0);
 }
 //return GPS lat
 void myGPS::GPSlat() {

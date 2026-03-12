@@ -1,9 +1,10 @@
-// Library includes
+
+//^ Library includes
 #include <Arduino.h>
 #include <Wire.h>
 #include <Chrono.h>
 
-// My includes
+//^ My includes
 #include "IMU.h" 
 #include "BARO.h"
 #include "GPS.h"
@@ -17,33 +18,33 @@
 #include "BAT.h"
 
 State state;
-//public varables
+//^public variables
 //float accelMag = 0;                         
 bool flashWriteStatus = false;                // Check if posable to write to flash
-bool gyroZeroStatus = false;                  // Check if gyroscpe has been zeroed
-unsigned long landingDetectTime = 0;          // Running varable once landing has been triggered
+bool gyroZeroStatus = false;                  // Check if gyroscope has been zeroed
+unsigned long landingDetectTime = 0;          // Running variable once landing has been triggered
 
-bool finishedWriting = false;                 // Check if flass has finished write
-unsigned long prevLoopTime;                   // Resets each next loop, messures loop time
-unsigned long currentLoopTime;                // Resets each loop, messures loop time
+bool finishedWriting = false;                 // Check if flash has finished write
+unsigned long prevLoopTime;                   // Resets each next loop, measures loop time
+unsigned long currentLoopTime;                // Resets each loop, measures loop time
 
 //unsigned long launchAbortTime = 0;          // Unused   
 
-bool firstLaunchLoop = true;                  // Is this the first loop in the lanch commanded state    
+bool firstLaunchLoop = true;                  // Is this the first loop in the launch commanded state    
 bool firstAbortLoop = true;                   // Is this the first loop in the aborted state
 //unsigned long abortLoopTime = 0;            // Unused
 
 float firstPow = 0;                           // Is this the first loop in the powered assent state
-float powStart = 0;                           // Messured time since powered assent start
+float powStart = 0;                           // Measured time since powered assent start
 
 bool isGPS0 = false;                          // Check if GPS has been zeroed
 
-//class objects
+//^class objects
 myIMU imu;                      // mpu object
 myBaro barometer;               // baro object
 myGPS gps;                      // GPS object
-myFlash flash(flashPin);      // Flash object
-myFlash sd(sdPin);            // SD object
+myFlash flash(flashPin);        // Flash object
+myFlash sd(sdPin);              // SD object
 myFilter filt;                  // Kalman filter object
 myLoRa lora(radioPin);          // Lora object
 myBuzz buzz(buzzPin);           // Buzz object
@@ -51,9 +52,9 @@ myBat bat(voltPin);             // Battery object
 
 Chrono navTimer;   //Find nav timing
 
-// My funtions
+//^ My functions
 void handleNav();                 //runs sensors logging, radio and state switching
-bool isAnglePassedThreshold();    //checks if need to arbort
+bool isAnglePassedThreshold();    //checks if need to abort
 
 // Set up sensors, output, Serial. Also inti states then switch
 void setup() {
@@ -113,7 +114,7 @@ void loop() {
 
     case IDLE:
       {
-        // Check if acceleraation is high: if flight has started
+        // Check if acceleration is high: if flight has started
         if (data.worldAy > LAUNCH_ACCEL_THRESHOLD) {
           goToState(POWERED_ASCENT);
           Serial.println("Going to POWERED_ASCENT mode");
@@ -160,7 +161,7 @@ void loop() {
           goToState(FREE_DESCENT);
           Serial.println("Going to FREE_DESCENT mode");
         }
-        // Go to aport if angle is too far over
+        //Go to aport if angle is too far over
         if(isAnglePassedThreshold()){
           goToState(ABORT);
           Serial.println("Going to ABORT mode");
@@ -170,7 +171,7 @@ void loop() {
 
     case UNPOWERED_ASCENT:
       {
-        // Get velocity: if it is negitive go to free descent
+        // Get velocity: if it is negative go to free descent
         if (data.kal_X_vel <= -0.5f) {
           goToState(FREE_DESCENT);
           Serial.println("Going to FREE_DESCENT mode");
@@ -180,13 +181,13 @@ void loop() {
 
     case FREE_DESCENT:
       {
-        // Check for low enough altitide to deploy
+        // Check for low enough altitude to deploy
         if (data.altitude <= PARACHUTE_ALTITUDE_THRESHOLD) {
-          // Write prachute launch to servo
+          // Write parachute launch to servo
           goToState(PARACHUTE_DESCENT);
           landingDetectTime = millis();
         }
-        // Check time after pow start to deploy shoot: for safty
+        // Check time after pow start to deploy shoot: for safety
         if (powStart > PARACHUTE_EJECT_SAFETY_TIME)
         {
           goToState(ABORT);
@@ -221,7 +222,7 @@ void loop() {
 
     case ABORT:
       {
-        //firepyro?
+        //fire pyro?
         break;
       }
 

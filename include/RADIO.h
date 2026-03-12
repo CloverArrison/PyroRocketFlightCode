@@ -8,7 +8,7 @@
 class myLoRa {
 
 public:
-  myLoRa(int Lorapin);               
+  myLoRa(int LoraPin);               
   void LoRaStart();                  // Setup radio with pin
   void sendPacket(String packet);    // Send data transmit 
   String getPacket();                // Attempt to get data 

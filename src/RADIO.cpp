@@ -1,8 +1,8 @@
 #include "RADIO.h"
 
 int LoRaPin;
-myLoRa::myLoRa(int lorapin){
-  LoRaPin = lorapin;
+myLoRa::myLoRa(int loraPin){
+  LoRaPin = loraPin;
 }
 
 void myLoRa::LoRaStart() {
