@@ -24,7 +24,7 @@ public:
   String GPStime();       // Output time from GPS as a string
   void GPSaltitude();     // Write altitude to data
   void GPSx();            // Write GPS x cord to data
-  void GPSy();            // Write GPS y cord to data
+  void GPSz();            // Write GPS z cord to data
   void GPSlat();          // Write GPS latitude cord to data
   void GPSlon();          // Write GPS longitude cord to data
   void GPSsats();         // Find how many santilites 

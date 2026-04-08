@@ -60,8 +60,8 @@ void myGPS::GPSx() {
   data.gpsx = (GPS.longitude * cosLat0 * earthRadius);  // - (lon0* std::cos(cosLat0) * earthRadius);
 }
 //return GPS y
-void myGPS::GPSy() {
-  data.gpsy = (earthRadius * GPS.latitude) - (earthRadius * lat0);
+void myGPS::GPSz() {
+  data.gpsz = (earthRadius * GPS.latitude) - (earthRadius * lat0);
 }
 //return GPS lat
 void myGPS::GPSlat() {
@@ -86,6 +86,7 @@ void myGPS::GPSupdate(){
 }
 
 
+/*
 void myGPS::GPSdata() {
   GPS.hour;
   GPS.minute;
@@ -103,3 +104,4 @@ void myGPS::GPSdata() {
   GPS.antenna;
 
 }
+*/

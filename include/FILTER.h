@@ -12,7 +12,8 @@ class myFilter {
 
 public:
   myFilter();
-  void startFilter();
+  void startKalman();
+  void runKalman(float pos, float acc, float dataOut[3]);
 };
 
 #endif

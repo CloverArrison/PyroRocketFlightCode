@@ -1,55 +1,74 @@
 #include "CONFIG.h"
 #include "FILTER.h"
-
 #include <Arduino.h>
 #include "DATA.h"
-#include <Kalman.h>
 
-Kalman kalmanX; // Create the Kalman instances
-Kalman kalmanY;
-Kalman kalmanZ; 
 
-double accX, accY, accZ;
-double gyroX, gyroY, gyroZ;
+#define EKF_N 3 //pos vel acc
+#define EKF_M 2 //pos acc
+static const uint8_t LM35_PIN = 0;
 
-double gyroXangle, gyroYangle; // Angle calculate using the gyro only
-double compAngleX, compAngleY; // Calculated angle using a complementary filter
-double kalAngleX, kalAngleY; // Calculated angle using a Kalman filter
+#include <tinyekf.h>
+#include <Wire.h>
 
-uint32_t timer;
+float T = data.loopTime;
+float DT = data.loopTime - data.prevLoopTime;
 
-myFilter::myFilter() {}
+static const float EPS = 1e-4;
 
-void myFilter::startFilter() {
-        accX = data.worldAx;
-        accY = data.worldAy;
-        accZ = data.worldAz;
+static const float Q[EKF_N*EKF_N] = { //3X3
+
+    EPS, 0, 0,
+    0, EPS, 0,   
+    0, 0,  EPS
+};
+
+static const float R[EKF_M*EKF_M] = { //2X2
+
+    EPS, 0,
+    0,   EPS
+    
+};
+
+// So process model Jacobian is identity matrix
+static const float F[EKF_N*EKF_N] = { //3X3
+    1, DT, 0.5 * DT * DT,
+    0, 1,       DT,
+    0, 0,       1
+};
+
+static const float H[EKF_M*EKF_N] = { //2X3
+    1, 0, 0,
+    0, 0, 1
+};
+
+static ekf_t _ekf;
+
+
+myFilter::myFilter(){
         
-
-        kalmanX.setAngle(data.gx);
-        kalmanY.setAngle(data.gy);
-
-        gyroXangle = data.gx;
-        gyroYangle = data.gy;
-        compAngleX = data.gx;
-        compAngleY = data.gy;
-        
-
-        timer = data.loopTime;
-
 }
 
-void myFilter::newData(){
-        accX = data.ax;
-        accY = data.ay;
-        accZ = data.az;
-        gyroX = data.gx;
-        gyroY = data.gy;
-        gyroZ = data.gz;
+void myFilter::startKalman(){
+        const float Pdiag[EKF_N] = {1, 1};
+        ekf_initialize(&_ekf, Pdiag);
+}       
 
-        timer = data.loopTime;
-        double dt = data.loopTime - data.prevLoopTime;
+void myFilter::runKalman(float mesPos, float mesAcc, float dataOutArray[3]){
+        //set obs vector
+        const float z[EKF_M] = {mesPos, mesAcc};
+        // process model
+        const float fx[EKF_N] = { _ekf.x[0], _ekf.x[1] };
+        // prediction step
+        ekf_predict(&_ekf, fx, F, Q);
+        // unknown/magic
+        const float hx[EKF_M] = {_ekf.x[0], _ekf.x[1]};
+        // update step
+        ekf_update(&_ekf, z, hx, H, R);
 
-
+        dataOutArray[0] = _ekf.x[0];
+        dataOutArray[1] = _ekf.x[1];
+        dataOutArray[2] = _ekf.x[2];
 }
+
 

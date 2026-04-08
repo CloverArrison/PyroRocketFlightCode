@@ -1,0 +1,24 @@
+:repository-owner: arduino-libraries
+:repository-name: MadgwickAHRS
+
+= Madgwick Library =
+
+image:https://github.com/{repository-owner}/{repository-name}/actions/workflows/check-arduino.yml/badge.svg["Check Arduino status", link="https://github.com/{repository-owner}/{repository-name}/actions/workflows/check-arduino.yml"]
+image:https://github.com/{repository-owner}/{repository-name}/actions/workflows/compile-examples.yml/badge.svg["Compile Examples status", link="https://github.com/{repository-owner}/{repository-name}/actions/workflows/compile-examples.yml"]
+image:https://github.com/{repository-owner}/{repository-name}/actions/workflows/spell-check.yml/badge.svg["Spell Check status", link="https://github.com/{repository-owner}/{repository-name}/actions/workflows/spell-check.yml"]
+
+This library wraps the official implementation of MadgwickAHRS algorithm to get orientation of an object based on accelerometer and gyroscope readings
+
+== License ==
+
+Copyright (c) Sebastian Madgwick, Arduino LLC
+
+This program is free software: you can redistribute it and/or modify it under the terms of the GNU General Public License as published by the Free Software Foundation, version 3.
+
+This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License along with this program. If not, see <https://www.gnu.org/licenses/>.
+
+Implementation of Madgwick's IMU and AHRS algorithms.
+See: http://www.x-io.co.uk/node/8#open_source_ahrs_and_imu_algorithms
+

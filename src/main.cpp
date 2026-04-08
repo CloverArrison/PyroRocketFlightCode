@@ -49,6 +49,10 @@ myFilter filt;                  // Kalman filter object
 myLoRa lora(radioPin);          // Lora object
 myBuzz buzz(buzzPin);           // Buzz object
 myBat bat(voltPin);             // Battery object
+myFilter kalmanX;
+myFilter kalmanY;
+myFilter kalmanZ;
+
 
 Chrono navTimer;   //Find nav timing
 
@@ -74,7 +78,9 @@ void setup() {
   flash.flashSetup("Flash");      //Flash setup  //might be an error here?
   lora.LoRaStart();               //Radio setup
 
-  //k.startKalman();              //kalman setup  // need to program all of this
+  kalmanX.startKalman();          //kalman setup 
+  kalmanY.startKalman();
+  kalmanZ.startKalman();
 
   delay(100);
 
@@ -130,7 +136,7 @@ void loop() {
         if (firstLaunchLoop == true) {
           firstLaunchLoop = false;
           //setBaro0();
-          //zeroGyroscope();
+          imu.zeroGyro();
           //zeroKalman();
           break;
         }
@@ -182,7 +188,7 @@ void loop() {
     case FREE_DESCENT:
       {
         // Check for low enough altitude to deploy
-        if (data.altitude <= PARACHUTE_ALTITUDE_THRESHOLD) {
+        if (data.kal_Y_pos <= PARACHUTE_ALTITUDE_THRESHOLD) {
           // Write parachute launch to servo
           goToState(PARACHUTE_DESCENT);
           landingDetectTime = millis();
@@ -247,10 +253,12 @@ void handleNav() {
 
   //get all data and write to data.h
   if (navTimer.hasPassed(NAV_RATE)) {
+    data.loopTime = micros();
+
     imu.getIMU();
     gps.GPSaltitude();
     gps.GPSx();
-    gps.GPSy();
+    gps.GPSz();
     gps.GPSlat();
     gps.GPSlon();
     gps.GPSsats();
@@ -260,20 +268,35 @@ void handleNav() {
     //sd.writeData();
 
     //get loop times + write loop time to data
-    currentLoopTime = micros();
-    data.loopTime = float(currentLoopTime - prevLoopTime) / 1000.0f;
-    prevLoopTime = currentLoopTime;
     bat.handleBatteryCheck();  //bat voltage
   }
-  //Kalman filter here
+  imu.IMUfilter();
+  float XfilteredDataArray[3];
+  float YfilteredDataArray[3];
+  float ZfilteredDataArray[3];
+  kalmanX.runKalman(data.gpsx, data.ax, XfilteredDataArray);
+  kalmanZ.runKalman(data.gpsz, data.az, ZfilteredDataArray);
+  kalmanY.runKalman(data.gpsAltitude, data.ay, YfilteredDataArray);
+
+  data.kal_X_pos = XfilteredDataArray[0];
+  data.kal_X_vel = XfilteredDataArray[1];
+  data.kal_X_accel = XfilteredDataArray[2];
+  data.kal_Z_pos = ZfilteredDataArray[0];
+  data.kal_Z_vel = ZfilteredDataArray[1];
+  data.kal_Z_accel = ZfilteredDataArray[2];
+  data.kal_Y_pos = YfilteredDataArray[0];
+  data.kal_Y_vel = YfilteredDataArray[1];
+  data.kal_Y_accel = YfilteredDataArray[2];
+
 
   navTimer.restart();
+  data.prevLoopTime = data.loopTime;
 }
 
 //Only run  in pow ascent
 bool isAnglePassedThreshold() {
   if (ENABLE_ANGLE_CHECK == true) {
-    if (abs(data.yaw) >= ABORT_ANGLE_THRESHOLD || abs(data.pitch) >= ABORT_ANGLE_THRESHOLD) {
+    if (abs(data.magYaw) >= ABORT_ANGLE_THRESHOLD || abs(data.magPitch) >= ABORT_ANGLE_THRESHOLD) {
       return true;
     }
   }

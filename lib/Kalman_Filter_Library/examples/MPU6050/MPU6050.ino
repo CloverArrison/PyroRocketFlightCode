@@ -86,7 +86,7 @@ void setup() {
   compAngleY = pitch;
 
   timer = micros();
-}
+}`
 
 void loop() {
   /* Update all the values */

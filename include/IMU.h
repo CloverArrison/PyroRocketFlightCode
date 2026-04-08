@@ -12,6 +12,10 @@ public:
   myIMU();
   void IMUstart();    // Setup with all settings
   void getIMU();      // Read IMU print data
+  void IMUfilter();
+  void zeroGyro();
+private:
+  bool convertToGlobal(); //Global acceleration
 };
 
 #endif
