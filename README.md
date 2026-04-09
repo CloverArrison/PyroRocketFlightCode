@@ -1,4 +1,5 @@
 # Pyro Rocket Flight Code Arduino/C++
+Based on  Cygnus-X1-Software by AdamMarciniak
 
 Flight Code for Pyro High Power Rocket
 Made by Clover Arrison
