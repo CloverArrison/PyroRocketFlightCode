@@ -1,4 +1,3 @@
-file:///home/clovera/Documents/PlatformIO/Projects/260309-140117-adafruit_feather_m0/include/DATA.h {"mtime":1781722955550,"ctime":1773345690286,"size":1307,"etag":"3g8b22rg51b5","orphaned":false,"typeId":""}
 #pragma once
 #include <Arduino.h>
 #include "STATES.h"

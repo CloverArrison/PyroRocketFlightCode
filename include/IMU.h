@@ -15,7 +15,7 @@ public:
   void IMUfilter();
   void zeroGyro();
 private:
-  bool convertToGlobal(); //Global acceleration
+  void convertToGlobal(); //Global acceleration
 };
 
 #endif

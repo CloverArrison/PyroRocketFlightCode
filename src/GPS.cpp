@@ -1,4 +1,4 @@
-d//#include <cmath>
+#include <cmath>
 #include "WString.h"
 #include "GPS.h"
 
