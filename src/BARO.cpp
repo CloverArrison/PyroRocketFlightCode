@@ -10,8 +10,10 @@ void myBaro::baroStart(){
     Serial.println("Error: Barometer couldn't start"); 
     while(1){delay(10);};
   }
-   
-  baro.setSeaPressure(seaLevelPressure); //set sea level press depending on location
+  delay(10);
+  //baro.setAltitudeOffset(baro.getAltitude()); // zero barometer
+  baro.setSeaPressure(baro.getAltitude());
+  
   Serial.println("Baro setup done");
 };
 

@@ -32,9 +32,9 @@ void myIMU::IMUstart() {
 void myIMU::getIMU() {
   mpu.getEvent(&a, &g, &temp);
 
-  data.gx = a.gyro.x;
-  data.gy = a.gyro.y;
-  data.gz = a.gyro.z;
+  data.gx = g.gyro.x;
+  data.gy = g.gyro.y;
+  data.gz = g.gyro.z;
   
   data.ax = a.acceleration.x;
   data.ay = a.acceleration.y;
@@ -52,10 +52,24 @@ void myIMU::zeroGyro(){
 }
 
 Madgwick filter; //Specific filter for IMU
+float axGrav, ayGrav, azGrav;
+float gxGrav, gyGrav, gzGrav;
+
 
 void myIMU::IMUfilter() {
   //all work done here
-  filter.updateIMU(data.gx, data.gy, data.gz, data.ax, data.ay, data.az);
+
+  
+  const double EARTHGRAVACC = 9.80665;
+
+  axGrav = data.ax / EARTHGRAVACC;
+  ayGrav = data.ay / EARTHGRAVACC;
+  azGrav = data.az / EARTHGRAVACC;
+  gxGrav = data.gx / EARTHGRAVACC;
+  gyGrav = data.gy / EARTHGRAVACC;
+  gzGrav = data.gz / EARTHGRAVACC;
+
+  filter.updateIMU(gxGrav, gyGrav, gzGrav, axGrav, ayGrav, azGrav);
 
   // library uses roll pitch yaw x y z, I use yaw roll pitch x y z
   // assigns to data and accounts for difference
@@ -69,17 +83,20 @@ void myIMU::IMUfilter() {
   data.reltoglobeQ1 = filter.getQ1();
   data.reltoglobeQ2 = filter.getQ2();
   data.reltoglobeQ3 = filter.getQ3();
+
+  convertToGlobal();
+
 }
 
-bool myIMU::convertToGlobal(){
+void myIMU::convertToGlobal(){
   // Short hand for readability 
   float qw = data.reltoglobeQ0;
   float qx = data.reltoglobeQ1;
   float qy = data.reltoglobeQ2;
   float qz = data.reltoglobeQ3;
-  float ax = data.ax;
-  float ay = data.ay;
-  float az = data.az;
+  float ax = axGrav;
+  float ay = ayGrav;
+  float az = azGrav;
 
   // Uses the quaternion to rotate the acceleration from the IMU to a global reference frame
   data.worldAx = ax * (1.0f - 2.0f * qy * qy - 2.0f * qz * qz) +
@@ -93,7 +110,5 @@ bool myIMU::convertToGlobal(){
   data.worldAz = ax * (2.0f * qx * qz - 2.0f * qw * qy) +
                     ay * (2.0f * qy * qz + 2.0f * qw * qx) +
                     az * (1.0f - 2.0f * qx * qx - 2.0f * qy * qy);
-
-  
 
 }

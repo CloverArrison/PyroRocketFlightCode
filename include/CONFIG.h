@@ -25,7 +25,7 @@
 // SELF_FIRE true if firing with BTLE
 // DO_GPS true (can be always true)
 
-#define IS_TEST_MODE false
+#define IS_TEST_MODE true
 #define IS_DUMP_MODE false
 
 #define ENABLE_PARACHUTE true
@@ -79,7 +79,7 @@
 #define GYRO_BIAS_COUNT 100
 
 #define BATTERY_VOLTAGE_MIN 3.2f // volts
-#define NAV_RATE 5                // ms
+#define NAV_RATE 50                // ms
 
 #define PARACHUTE_SERVO_DEPLOY 50
 #define PARACHUTE_SERVO_INIT 97

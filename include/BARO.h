@@ -3,7 +3,6 @@
 
 #include <Adafruit_MPL3115A2.h>
 #include "DATA.h"
-#
 
 class myBaro{
   public:
@@ -13,9 +12,6 @@ class myBaro{
     float getBaroAlt();     // Output altitude read barometer pressure
     void baroAlt();         // Writes altitude to data
     float getBaroTemp();    // Output barometer temperature
-  private:
-
-
 };
  
 #endif

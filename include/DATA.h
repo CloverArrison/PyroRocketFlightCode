@@ -1,3 +1,4 @@
+file:///home/clovera/Documents/PlatformIO/Projects/260309-140117-adafruit_feather_m0/include/DATA.h {"mtime":1781722955550,"ctime":1773345690286,"size":1307,"etag":"3g8b22rg51b5","orphaned":false,"typeId":""}
 #pragma once
 #include <Arduino.h>
 #include "STATES.h"
@@ -8,37 +9,39 @@ void goToState(State state);
 void eraseFlightData();
 
 struct Data {
-  float ms;
+  float ms; // millis
 
-  float ax;
-  float ay;
-  float az;
+  float ax; // mps
+  float ay; // mps
+  float az; // mps
   
   //float kalWorldAx;
   //float kalWorldAy;
   //float kalWorldAz;
 
-  float worldAx;
-  float worldAy;
-  float worldAz;
+  float worldAx; // mps
+  float worldAy; // mps
+  float worldAz; // mps
 
-  float gx;
-  float gy;
-  float gz;
-  float magYaw;    //x deg
-  float magPitch;  //z deg
-  float magRoll;   //y deg
+  float gx; // deg/sec
+  float gy; // deg/sec
+  float gz; // deg/sec
+  float magYaw;    // x deg
+  float magPitch;  // z deg
+  float magRoll;   // y deg
 
+
+  // Quaternions 
   float reltoglobeQ0;
   float reltoglobeQ1;
   float reltoglobeQ2;
   float reltoglobeQ3;
 
-  float baroAltitude;
-  float biasAltitude;
+  float baroAltitude; // meters above sea level
+  float biasAltitude; // meters above ground
 
-  float loopTime;
-  float prevLoopTime;
+  float loopTime = 0; // ms
+  float prevLoopTime = 0; // ms
 
   State state;
   float fState;
@@ -69,18 +72,19 @@ struct Data {
 
   float batteryVoltage;
 
-  float lat;
-  float lng;
-  float gpsx;
-  float gpsz;
-  float gpsAltitude;
-  float gps_altitude_bias;
+  float lat; // deg
+  float lng; // deg
+  float gpsx; // m
+  float gpsz; // m
+  float gpsAltitude; // m?
+  float gps_altitude_bias; // m?
 
   String gpsDate;
   String gpsTime;
   float sats;
   float hdop;
 
+  // 
   float worldAxBias;
   float worldAyBias;
   float worldAzBias;

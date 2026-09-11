@@ -1,10 +1,10 @@
 
-//^ Library includes
+// ^ Library includes
 #include <Arduino.h>
 #include <Wire.h>
 #include <Chrono.h>
 
-//^ My includes
+// ^ My includes
 #include "IMU.h" 
 #include "BARO.h"
 #include "GPS.h"
@@ -18,8 +18,8 @@
 #include "BAT.h"
 
 State state;
-//^public variables
-//float accelMag = 0;                         
+// ^public variables
+// float accelMag = 0;                         
 bool flashWriteStatus = false;                // Check if posable to write to flash
 bool gyroZeroStatus = false;                  // Check if gyroscope has been zeroed
 unsigned long landingDetectTime = 0;          // Running variable once landing has been triggered
@@ -30,14 +30,16 @@ unsigned long currentLoopTime;                // Resets each loop, measures loop
 
 bool firstLaunchLoop = true;                  // Is this the first loop in the launch commanded state    
 bool firstAbortLoop = true;                   // Is this the first loop in the aborted state
-//unsigned long abortLoopTime = 0;            // Unused
+// unsigned long abortLoopTime = 0;            // Unused
 
 float firstPow = 0;                           // Is this the first loop in the powered assent state
 float powStart = 0;                           // Measured time since powered assent start
 
 bool isGPS0 = false;                          // Check if GPS has been zeroed
 
-//^class objects
+int mainSerialRate(115200);
+
+// ^class objects
 myIMU imu;                      // mpu object
 myBaro barometer;               // baro object
 myGPS gps;                      // GPS object
@@ -51,36 +53,32 @@ myFilter kalmanX;               // Kalman divided between axis
 myFilter kalmanY;               // Y-axis is up
 myFilter kalmanZ;
 
+Chrono navTimer;                // Find nav timing (loop timeing)
+Chrono loopTimer;
 
-Chrono navTimer;                //Find nav timing
-
-//^ My functions
-void handleNav();               //runs sensors logging, radio and state switching
-bool isAnglePassedThreshold();  //checks if need to abort
+// ^ My functions
+void handleNav();               // runs sensors logging, radio and state switching
+bool isAnglePassedThreshold();  // checks if need to abort
 
 // Set up sensors, output, Serial. Also inti states then switch to idle
 void setup() {
-  delay(1500);                    // Wait for feather to power on
+  delay(1000);                    // Wait for feather to power on
   goToState(INITIALIZING);
-  buzz.buzzStart();
-  Serial.println("start init");
 
-  //serial setup
-  Serial.begin(115200);           //main serial rate
+  Serial.begin(mainSerialRate);           // main serial rate
   while (!Serial);
-  Serial.println("Serial on");
-  gps.GPSstart();                 //gps setup
-  imu.IMUstart();                 //mpu setup
-  barometer.baroStart();          //baro setup
-  sd.flashSetup("SD");            //sd setup
-  flash.flashSetup("Flash");      //Flash setup  //might be an error here?
-  lora.LoRaStart();               //Radio setup
+  Serial.print("Serial Rate: ");
+  Serial.println(mainSerialRate);
+  gps.GPSstart();                 // gps setup
+  imu.IMUstart();                 // mpu setup
+  barometer.baroStart();          // baro setup
+  sd.flashSetup("SD");            // sd setup
+  flash.flashSetup("Flash");      // Flash setup  // might be an error here?
+  lora.LoRaStart();               // Radio setup
 
-  kalmanX.startKalman();          //kalman setup 
+  kalmanX.startKalman();          // kalman setup 
   kalmanY.startKalman();
   kalmanZ.startKalman();
-
-  buzz.buzzComplete(); //finished set up now go to Idle state
   
   // Read loop times
   prevLoopTime = 0;       
@@ -95,20 +93,22 @@ void setup() {
     Serial.println("Going to idle mode");
 
   }
+  
+  loopTimer.start();
   Serial.println("end init");
 
   Serial.println("-------------------------------------------------------------------------");
 }
 
 void loop() {
-  //runs every loop//
+  navTimer.start();
   handleNav();                  // Get all sensor data, run filters, Check battery, run loop times
-  sd.handleWriteFlash();      
+  //sd.handleWriteFlash();      
   //handleEUI();
   //handleTransmit();
 
   switch (data.state) {
-    case INITIALIZING:  //should never be here, should switch out before
+    case INITIALIZING:  // should never be here, should switch out before
       {
         Serial.println("ERROR: INITIALIZING too late ");
         while(1);
@@ -128,16 +128,16 @@ void loop() {
     case LAUNCH_COMMANDED:
       {
         // If this is the first loop zero everything
-        //firstLaunchLoop = true;
+        // firstLaunchLoop = true;
         if (firstLaunchLoop == true) {
           firstLaunchLoop = false;
-          //setBaro0();
+          // setBaro0();
           imu.zeroGyro();
-          //zeroKalman();
+          // zeroKalman();
           break;
         }
 
-        //If accel is still high then motor is on go to pow ascent
+        // If accel is still high then motor is on go to pow ascent
         if (data.worldAy > LAUNCH_ACCEL_THRESHOLD) {
           goToState(POWERED_ASCENT);
           Serial.println("Going to POWERED_ASCENT mode");
@@ -163,7 +163,7 @@ void loop() {
           goToState(FREE_DESCENT);
           Serial.println("Going to FREE_DESCENT mode");
         }
-        //Go to aport if angle is too far over
+        // Go to aport if angle is too far over
         if(isAnglePassedThreshold()){
           goToState(ABORT);
           Serial.println("Going to ABORT mode");
@@ -200,8 +200,8 @@ void loop() {
       
     case PARACHUTE_DESCENT:
       {
-        //pyroFire();
-        //If velocity is near 0 go to landed
+        // pyroFire();
+        // If velocity is near 0 go to landed
         if (data.kal_X_vel >= -0.5f) {
           goToState(LANDED);
           Serial.println("Going to LANDED mode");
@@ -211,7 +211,7 @@ void loop() {
 
     case LANDED:
       {
-        //dump data
+        // dump data
         break;
       }
 
@@ -224,14 +224,12 @@ void loop() {
 
     case ABORT:
       {
-        //fire pyro?
+        // fire pyro?
         break;
       }
 
     case TEST:
       {
-        pinMode(11, OUTPUT);
-        digitalWrite(11, HIGH);
 
         break;
       }
@@ -240,29 +238,39 @@ void loop() {
         break;
       }
   }
+
+  
+  data.prevLoopTime = data.loopTime;
+  data.loopTime = loopTimer.elapsed();
+  loopTimer.restart();
 }
 
 void handleNav() {
-  //get all data and write to data.h
-  if (navTimer.hasPassed(NAV_RATE)) {
-
-    data.loopTime = micros();
+  // get all data and write to data struct
+  
+  if (navTimer.hasPassed(NAV_RATE)) { 
+    Serial.println("test");
+    Serial.println("Run Nav");
     imu.getIMU();
-    gps.GPSaltitude();
-    gps.GPSx();
-    gps.GPSz();
-    gps.GPSlat();
-    gps.GPSlon();
-    gps.GPSsats();
-    barometer.baroAlt();
-    data.ms = millis();  // total millis since start up
+    if(gps.isFix()){
+      gps.GPSaltitude();
+      gps.GPSx();
+      gps.GPSz();
+      gps.GPSlat();
+      gps.GPSlon();
+      gps.GPSsats();
+    }
 
-    //sd.writeData();
+    // ^isnt getting passes get baro alt this needs to be fixed
+    //barometer.baroAlt();
+    data.ms = millis();   // total millis since start up
+    sd.printToSerial();   // Prints formatted data to serial
 
-    //get loop times + write loop time to data
-    bat.handleBatteryCheck();  //bat voltage
-  }
-  imu.IMUfilter();  // Take in raw imu data output the filtered attitude
+    // bat.handleBatteryCheck();  // bat voltage
+
+    
+
+  //imu.IMUfilter();  // Take in raw imu data output the filtered attitude
 
   // Arrays for the output of kalman filter, blank to start
   float XfilteredDataArray[3];
@@ -285,12 +293,11 @@ void handleNav() {
   data.kal_Y_vel = YfilteredDataArray[1];
   data.kal_Y_accel = YfilteredDataArray[2];
 
-  
   navTimer.restart();
-  data.prevLoopTime = data.loopTime;
+  }
 }
 
-//Only run  in pow ascent
+// Only run  in pow ascent
 bool isAnglePassedThreshold() {
   if (ENABLE_ANGLE_CHECK == true) {
     if (abs(data.magYaw) >= ABORT_ANGLE_THRESHOLD || abs(data.magPitch) >= ABORT_ANGLE_THRESHOLD) {
