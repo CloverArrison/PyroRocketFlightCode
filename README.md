@@ -8,13 +8,13 @@ I have been building a high-power rocket since June 2024, it has not flown yet b
 
 Uses Arduino, made in Platform IO
 My flight computer uses:
-  Adafruit Adaloger Feather M0
-  MPU6050 IMU
-  MPL3115A2 Barometer
-  Adafruit GPS
-  LoRa 915 Radio
-  SPI Flash Chip
-  Three Pyro Chanles using N-Chanel Mosfets
+  Adafruit Adaloger Feather M0,
+  MPU6050 IMU,
+  MPL3115A2 Barometer,
+  Adafruit GPS,
+  LoRa 915 Radio,
+  SPI Flash Chip,
+  Three Pyro Chanles using N-Chanel Mosfets,
   PWM Buzzer
 
 The Rocket "Pyro"
