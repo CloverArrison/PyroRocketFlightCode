@@ -71,6 +71,7 @@ void myFlash::printToSerial() {
     "\n[IMU Gyro & Orientation]\n"
     "Gyro: X:%6.2f Y:%6.2f Z:%6.2f\n"
     "Quat: [%.2f, %.2f, %.2f, %.2f]\n"
+    "Attitude: Yaw: %.2f | Pitch: %.2f | Roll: %.2f\n"
     "\n[Barometer]\n"
     "Alt: %.2f m | Bias: %.2f m\n"
     "\n[GPS Data]\n"
@@ -88,6 +89,7 @@ void myFlash::printToSerial() {
     data.worldAx, data.worldAy, data.worldAz,
     data.gx, data.gy, data.gz,
     data.reltoglobeQ0, data.reltoglobeQ1, data.reltoglobeQ2, data.reltoglobeQ3,
+    data.magYaw, data.magPitch, data.magRoll,
     data.baroAltitude, data.biasAltitude,
     data.lat, data.lng, data.sats, data.hdop,
     data.gpsDate.c_str(), data.gpsTime.c_str(),

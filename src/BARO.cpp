@@ -11,8 +11,10 @@ void myBaro::baroStart(){
     while(1){delay(10);};
   }
   delay(10);
+
+  //these don't work for some reason, so we will just fix it later
   //baro.setAltitudeOffset(baro.getAltitude()); // zero barometer
-  baro.setSeaPressure(baro.getAltitude());
+  //baro.setSeaPressure(baro.getAltitude());
   
   Serial.println("Baro setup done");
 };

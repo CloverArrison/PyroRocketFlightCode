@@ -3,14 +3,19 @@
 #include <MadgwickAHRS.h>
 #include <Arduino.h>
 
+#include "CONFIG.h"
 
 
 Adafruit_MPU6050 mpu;
 sensors_event_t a, g, temp;
+Madgwick filter;
+
 
 myIMU::myIMU(){};
 
 void myIMU::IMUstart() {
+  mpu.begin();
+  delay(50);
   if (!mpu.begin()) {
     Serial.println("Failed to find MPU6050 chip");
     while (1) {
@@ -26,10 +31,15 @@ void myIMU::IMUstart() {
   mpu.setInterruptPinPolarity(true);
   mpu.setMotionInterrupt(true);
 
+  filter.begin(NAV_RATE);
+
+
+
 }
 
 //GYRO
 void myIMU::getIMU() {
+  // units m/s^2, rad/s, deg C
   mpu.getEvent(&a, &g, &temp);
 
   data.gx = g.gyro.x;
@@ -41,6 +51,7 @@ void myIMU::getIMU() {
   data.az = a.acceleration.z;
 
   data.accelMag = sqrt(data.ax * data.ax +data.ay * data.ay +data.az * data.az);
+  IMUfilter();
 }
 
 void myIMU::zeroGyro(){
@@ -51,25 +62,30 @@ void myIMU::zeroGyro(){
 
 }
 
-Madgwick filter; //Specific filter for IMU
 float axGrav, ayGrav, azGrav;
-float gxGrav, gyGrav, gzGrav;
+float gxDeg, gyDeg, gzDeg;
 
 
 void myIMU::IMUfilter() {
   //all work done here
 
-  
   const double EARTHGRAVACC = 9.80665;
+  const double RAD2DEG = 57.29578;
 
+  //convert m/s^2 to g's for the filter
   axGrav = data.ax / EARTHGRAVACC;
   ayGrav = data.ay / EARTHGRAVACC;
   azGrav = data.az / EARTHGRAVACC;
-  gxGrav = data.gx / EARTHGRAVACC;
-  gyGrav = data.gy / EARTHGRAVACC;
-  gzGrav = data.gz / EARTHGRAVACC;
+  // Convert radians to degrees 
+  gxDeg = data.gx * RAD2DEG; 
+  gyDeg = data.gy * RAD2DEG;
+  gzDeg = data.gz * RAD2DEG;
 
-  filter.updateIMU(gxGrav, gyGrav, gzGrav, axGrav, ayGrav, azGrav);
+  
+  filter.updateIMU(gxDeg, gyDeg, gzDeg, axGrav, ayGrav, azGrav);
+  
+  // +y is up, +x is right, +z is out from the board
+  // my roll is y, my pitch is z, my yaw is x
 
   // library uses roll pitch yaw x y z, I use yaw roll pitch x y z
   // assigns to data and accounts for difference

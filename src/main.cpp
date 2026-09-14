@@ -101,7 +101,7 @@ void setup() {
 }
 
 void loop() {
-  navTimer.start();
+  //Serial.println("loop");
   handleNav();                  // Get all sensor data, run filters, Check battery, run loop times
   //sd.handleWriteFlash();      
   //handleEUI();
@@ -249,8 +249,6 @@ void handleNav() {
   // get all data and write to data struct
   
   if (navTimer.hasPassed(NAV_RATE)) { 
-    Serial.println("test");
-    Serial.println("Run Nav");
     imu.getIMU();
     if(gps.isFix()){
       gps.GPSaltitude();
@@ -260,7 +258,7 @@ void handleNav() {
       gps.GPSlon();
       gps.GPSsats();
     }
-
+    
     // ^isnt getting passes get baro alt this needs to be fixed
     //barometer.baroAlt();
     data.ms = millis();   // total millis since start up
@@ -295,6 +293,7 @@ void handleNav() {
 
   navTimer.restart();
   }
+  //Serial.println("test2");
 }
 
 // Only run  in pow ascent
