@@ -65,6 +65,7 @@ void myFlash::printToSerial() {
     "\n--- SYSTEM DATA ---\n"
     "Time: %.2f ms | Batt: %.2f V | State: %.1f\n"
     "Loop: %.3f ms (Prev: %.3f)\n"
+    "Nav Loop: %.3f ms (Prev: %.3f)\n"
     "\n[IMU Acceleration]\n"
     "Raw:  X:%6.2f Y:%6.2f Z:%6.2f\n"
     "World: X:%6.2f Y:%6.2f Z:%6.2f\n"
@@ -85,6 +86,7 @@ void myFlash::printToSerial() {
     "-------------------\n",
     data.ms, data.batteryVoltage, data.fState,
     data.loopTime, data.prevLoopTime,
+    data.navLoopTime, data.prevNavLoopTime,
     data.ax, data.ay, data.az,
     data.worldAx, data.worldAy, data.worldAz,
     data.gx, data.gy, data.gz,

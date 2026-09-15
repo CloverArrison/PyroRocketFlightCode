@@ -24,12 +24,19 @@ void myIMU::IMUstart() {
   }
   Serial.println("MPU6050 Found!");
   //mpu settings
-  mpu.setHighPassFilter(MPU6050_HIGHPASS_0_63_HZ);
-  mpu.setMotionDetectionThreshold(1);
-  mpu.setMotionDetectionDuration(20);
-  mpu.setInterruptPinLatch(true);  // Keep it latched.  Will turn off when reinitialized.
-  mpu.setInterruptPinPolarity(true);
-  mpu.setMotionInterrupt(true);
+  //mpu.setHighPassFilter(MPU6050_HIGHPASS_0_63_HZ);
+  //mpu.setMotionDetectionThreshold(1);
+  //mpu.setMotionDetectionDuration(20);
+  //mpu.setInterruptPinLatch(true);  // Keep it latched.  Will turn off when reinitialized.
+  //mpu.setInterruptPinPolarity(true);
+  //mpu.setMotionInterrupt(true);
+  
+
+
+  mpu.setGyroRange(MPU6050_RANGE_2000_DEG);
+  mpu.setAccelerometerRange(MPU6050_RANGE_16_G);
+  mpu.setFilterBandwidth(MPU6050_BAND_260_HZ);
+
 
   filter.begin(NAV_RATE);
 
@@ -81,6 +88,8 @@ void myIMU::IMUfilter() {
   gyDeg = data.gy * RAD2DEG;
   gzDeg = data.gz * RAD2DEG;
 
+
+    
   
   filter.updateIMU(gxDeg, gyDeg, gzDeg, axGrav, ayGrav, azGrav);
   

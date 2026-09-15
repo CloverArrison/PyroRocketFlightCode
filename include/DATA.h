@@ -9,6 +9,7 @@ void eraseFlightData();
 
 struct Data {
   float ms; // millis
+  float navMS; // handle nav runs millis
 
   float ax; // mps
   float ay; // mps
@@ -40,7 +41,9 @@ struct Data {
   float biasAltitude; // meters above ground
 
   float loopTime = 0; // ms
-  float prevLoopTime = 0; // ms
+  float prevLoopTime = 0; // ms 
+  float navLoopTime = 0; // ms
+  float prevNavLoopTime = 0; // ms
 
   State state;
   float fState;

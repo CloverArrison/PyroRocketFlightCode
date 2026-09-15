@@ -72,8 +72,8 @@ void setup() {
   gps.GPSstart();                 // gps setup
   imu.IMUstart();                 // mpu setup
   barometer.baroStart();          // baro setup
-  sd.flashSetup("SD");            // sd setup
-  flash.flashSetup("Flash");      // Flash setup  // might be an error here?
+  //sd.flashSetup("SD");            // sd setup
+  //flash.flashSetup("Flash");      // Flash setup  // might be an error here?
   lora.LoRaStart();               // Radio setup
 
   kalmanX.startKalman();          // kalman setup 
@@ -238,14 +238,18 @@ void loop() {
         break;
       }
   }
-
-  
+  float prevMillis = data.ms;
+  data.ms = millis();
   data.prevLoopTime = data.loopTime;
-  data.loopTime = loopTimer.elapsed();
+  data.loopTime = data.ms - prevMillis;
+
   loopTimer.restart();
 }
 
 void handleNav() {
+
+  data.prevNavLoopTime = data.navLoopTime;
+  data.navLoopTime = navTimer.elapsed();
   // get all data and write to data struct
   
   if (navTimer.hasPassed(NAV_RATE)) { 
@@ -261,8 +265,10 @@ void handleNav() {
     
     // ^isnt getting passes get baro alt this needs to be fixed
     //barometer.baroAlt();
-    data.ms = millis();   // total millis since start up
+
+    
     sd.printToSerial();   // Prints formatted data to serial
+
 
     // bat.handleBatteryCheck();  // bat voltage
 
@@ -293,7 +299,6 @@ void handleNav() {
 
   navTimer.restart();
   }
-  //Serial.println("test2");
 }
 
 // Only run  in pow ascent
