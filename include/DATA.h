@@ -26,6 +26,9 @@ struct Data {
   float gx; // deg/sec
   float gy; // deg/sec
   float gz; // deg/sec
+  float gxBias; // deg/sec
+  float gyBias; // deg/sec
+  float gzBias; // deg/sec
   float magYaw;    // x deg
   float magPitch;  // z deg
   float magRoll;   // y deg

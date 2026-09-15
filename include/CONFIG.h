@@ -79,7 +79,7 @@
 #define GYRO_BIAS_COUNT 100
 
 #define BATTERY_VOLTAGE_MIN 3.2f // volts
-#define NAV_RATE 50               // ms
+#define NAV_RATE 50000               // micro seconds
 
 #define PARACHUTE_SERVO_DEPLOY 50
 #define PARACHUTE_SERVO_INIT 97

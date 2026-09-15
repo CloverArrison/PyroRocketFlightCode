@@ -23,25 +23,14 @@ void myIMU::IMUstart() {
     }
   }
   Serial.println("MPU6050 Found!");
-  //mpu settings
-  //mpu.setHighPassFilter(MPU6050_HIGHPASS_0_63_HZ);
-  //mpu.setMotionDetectionThreshold(1);
-  //mpu.setMotionDetectionDuration(20);
-  //mpu.setInterruptPinLatch(true);  // Keep it latched.  Will turn off when reinitialized.
-  //mpu.setInterruptPinPolarity(true);
-  //mpu.setMotionInterrupt(true);
   
-
-
   mpu.setGyroRange(MPU6050_RANGE_2000_DEG);
   mpu.setAccelerometerRange(MPU6050_RANGE_16_G);
-  mpu.setFilterBandwidth(MPU6050_BAND_260_HZ);
+  mpu.setFilterBandwidth(MPU6050_BAND_44_HZ);
 
+  zeroGyro();
 
-  filter.begin(NAV_RATE);
-
-
-
+  filter.begin(18.867924528302f);
 }
 
 //GYRO
@@ -61,12 +50,23 @@ void myIMU::getIMU() {
   IMUfilter();
 }
 
-void myIMU::zeroGyro(){
+void myIMU::zeroGyro() {
   
   //also need to zero gyro rates
+  const int samples = 200;
+  float sumX = 0, sumY = 0, sumZ = 0;
   
- 
-
+  for (int i = 0; i < samples; i++) {
+    mpu.getEvent(&a, &g, &temp);
+    sumX += g.gyro.x;
+    sumY += g.gyro.y;
+    sumZ += g.gyro.z;
+    delay(5);
+  }
+  
+  data.gxBias = sumX / samples;
+  data.gyBias = sumY / samples;
+  data.gzBias = sumZ / samples;
 }
 
 float axGrav, ayGrav, azGrav;
@@ -98,7 +98,7 @@ void myIMU::IMUfilter() {
 
   // library uses roll pitch yaw x y z, I use yaw roll pitch x y z
   // assigns to data and accounts for difference
-  data.magYaw = filter.getRoll();
+  data.magYaw = filter.getRoll(); //degrees
   data.magRoll = filter.getPitch();
   data.magPitch = filter.getYaw();
 

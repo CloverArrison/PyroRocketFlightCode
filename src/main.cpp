@@ -53,7 +53,7 @@ myFilter kalmanX;               // Kalman divided between axis
 myFilter kalmanY;               // Y-axis is up
 myFilter kalmanZ;
 
-Chrono navTimer;                // Find nav timing (loop timeing)
+Chrono navTimer(Chrono::MICROS, false);                // Find nav timing (loop timeing)
 Chrono loopTimer;
 
 // ^ My functions
@@ -95,6 +95,7 @@ void setup() {
   }
   
   loopTimer.start();
+  navTimer.start();
   Serial.println("end init");
 
   Serial.println("-------------------------------------------------------------------------");
@@ -132,7 +133,7 @@ void loop() {
         if (firstLaunchLoop == true) {
           firstLaunchLoop = false;
           // setBaro0();
-          imu.zeroGyro();
+          //imu.zeroGyro();
           // zeroKalman();
           break;
         }
@@ -238,6 +239,7 @@ void loop() {
         break;
       }
   }
+  
   float prevMillis = data.ms;
   data.ms = millis();
   data.prevLoopTime = data.loopTime;
@@ -248,11 +250,11 @@ void loop() {
 
 void handleNav() {
 
-  data.prevNavLoopTime = data.navLoopTime;
-  data.navLoopTime = navTimer.elapsed();
   // get all data and write to data struct
   
   if (navTimer.hasPassed(NAV_RATE)) { 
+    data.prevNavLoopTime = data.navLoopTime;
+    data.navLoopTime = navTimer.elapsed();
     imu.getIMU();
     if(gps.isFix()){
       gps.GPSaltitude();
