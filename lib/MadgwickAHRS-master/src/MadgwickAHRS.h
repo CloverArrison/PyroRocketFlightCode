@@ -41,6 +41,7 @@ private:
 public:
     Madgwick(void);
     void begin(float sampleFrequency) { invSampleFreq = 1.0f / sampleFrequency; }
+    void begin(float sampleFrequency, float betaVal) { invSampleFreq = 1.0f / sampleFrequency; beta = betaVal;}
     void update(float gx, float gy, float gz, float ax, float ay, float az, float mx, float my, float mz);
     //void updateIMU_Rad_MPS2(float gx, float gy, float gz, float ax, float ay, float az);
     void updateIMU(float gx, float gy, float gz, float ax, float ay, float az);

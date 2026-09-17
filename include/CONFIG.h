@@ -29,6 +29,8 @@
 // SELF_FIRE true if firing with BTLE
 // DO_GPS true (can be always true)
 
+#define MAIN_SERIAL_RATE 115200
+
 #define IS_TEST_MODE true
 #define IS_DUMP_MODE false
 

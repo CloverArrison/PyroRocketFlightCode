@@ -12,12 +12,13 @@ Adafruit_MPU6050 mpu;
 sensors_event_t a, g, temp;
 Madgwick filter;
 
+const double EARTHGRAVACC = 9.80665;
 
 myIMU::myIMU(){};
 
 void myIMU::IMUstart() {
   mpu.begin();
-  delay(50);
+  delay(100);
   if (!mpu.begin()) {
     Serial.println("Failed to find MPU6050 chip");
     while (1) {
@@ -35,7 +36,7 @@ void myIMU::IMUstart() {
   
   
 
-  filter.begin(18.8679245283); // Start at 20Hz
+  filter.begin(18.8679245283); // Start at ~20Hz for the 50ms nav rate
 }
 
 //GYRO
@@ -80,7 +81,6 @@ void myIMU::zeroGyro() {
 }
 
 float axGrav, ayGrav, azGrav;
-float gxDeg, gyDeg, gzDeg;
 
 void myIMU::IMUfilter() {
   // this might not work, the filter doesn't say this works
@@ -91,22 +91,22 @@ void myIMU::IMUfilter() {
   // This still needs to be tested though
 
 
-  filter.begin(1000000.0f / data.navLoopTimeMicros);
+  // if acceliration too large turn off beta so Madgwick doesn't think the motor accel is gravity
+  if(data.accelMag > EARTHGRAVACC * 1.5){
+    filter.begin(1000000.0f / data.navLoopTimeMicros, 0.0001);
+  }
+  else{
+    filter.begin(1000000.0f / data.navLoopTimeMicros);
+  }
   
   // +y is up, +x is right, +z is out from the board
   // my roll is y, my pitch is z, my yaw is x
-
-  const double EARTHGRAVACC = 9.80665;
-  const double RAD2DEG = 57.29578;
 
   //convert m/s^2 to g's for the filter
   axGrav = data.ax / EARTHGRAVACC;
   ayGrav = data.ay / EARTHGRAVACC;
   azGrav = data.az / EARTHGRAVACC;
-  // Convert radians to degrees 
-  gxDeg = data.gx * RAD2DEG; 
-  gyDeg = data.gy * RAD2DEG;
-  gzDeg = data.gz * RAD2DEG;
+  
 
   filter.updateIMU(data.gx, data.gy, data.gz, axGrav, ayGrav, azGrav);
   //filter.updateIMU_Rad_MPS2(data.gx, data.gy, data.gz, data.ax, data.ay, data.az);

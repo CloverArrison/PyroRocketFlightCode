@@ -32,8 +32,6 @@ float powStart = 0;                           // Measured time since powered ass
 
 bool isGPS0 = false;                          // Check if GPS has been zeroed
 
-int mainSerialRate(115200);
-
 
 myIMU imu;                      // mpu6050 inertial measurement unit 
 myBaro barometer;               // MPL3115A2 barometer
@@ -46,7 +44,6 @@ myLoRa lora(radioPin);          // Adafruit LoRa radio
 myBuzz buzz(buzzPin);           // Buzzer
 myBat bat(voltPin);             // Battery voltage divider
 
-myFilter Kfilter;               // Kalman filter object
 myFilter kalmanX;               // Kalman divided between axis -- Y-axis is up
 myFilter kalmanY;          
 myFilter kalmanZ;
@@ -58,18 +55,18 @@ State state;
 
 void handleNav();               // runs sensors logging, radio and state switching
 bool isAnglePassedThreshold();  // checks if need to abort if the rocket tips over
+void runKFilter();              // update x, y, and z kalman filters with new data
 
 
 
 void setup() {
 
-  delay(500); //hey wake up!        // Wait for feather to power on
+  delay(250); //hey wake up!        // Wait for feather to power on
   goToState(INITIALIZING);
 
-  Serial.begin(mainSerialRate);           
+  Serial.begin(MAIN_SERIAL_RATE);           
   while (!Serial);
-  Serial.print("Serial Rate: ");
-  Serial.println(mainSerialRate);
+  Serial.print("Serial Rate: "); Serial.println(MAIN_SERIAL_RATE);
 
   gps.GPSstart();                 
   imu.IMUstart();                 
@@ -77,7 +74,6 @@ void setup() {
   //sd.flashSetup("SD");            
   //flash.flashSetup("Flash");      
   lora.LoRaStart();               
-
   kalmanX.startKalman();          
   kalmanY.startKalman();
   kalmanZ.startKalman();
@@ -105,18 +101,13 @@ void setup() {
 }
 
 void loop() {
+  if (navTimerMicros.hasPassed(NAV_RATE)) handleNav(); // gets sensor data and filters it
 
-  //Serial.println("loop");
-  
-  if (navTimerMicros.hasPassed(NAV_RATE)) handleNav(); 
-
-                   // Get all sensor data, run filters, Check battery, run loop times
   //sd.handleWriteFlash();      // no SD card, so this is commented out (would bne good to have this be a settng in config for if the SD card is present or not)
   
   // Future additons 
   // handleEUI();
   // handleTransmit();
-
 
   // Handles switching between modes for different stages of ascent, descent, and landing
   switch (data.state) {
@@ -251,9 +242,7 @@ void loop() {
       }
   }
   
-  
   data.ms = millis();
-
   data.prevLoopTimeMicros = data.loopTimeMicros;
   data.loopTimeMicros = loopTimerMicros.elapsed();
   loopTimerMicros.restart();
@@ -261,8 +250,7 @@ void loop() {
 
 void handleNav() {
   imu.getIMU();
-  //barometer.baroAlt();
-
+  //barometer.baroAlt(); // this is running very slow right now, almost 400ms
   if(gps.isFix()){
     Serial.print("GPS get");
     gps.GPSaltitude();
@@ -272,32 +260,10 @@ void handleNav() {
     gps.GPSlon();
     gps.GPSsats();
   }
+  runKFilter();
   
-
   // bat.handleBatteryCheck();  // bat voltage from the voltage divider 
 
-  /*
-  // Arrays for the output of kalman filter, blank to start
-  float XfilteredDataArray[3];
-  float YfilteredDataArray[3];
-  float ZfilteredDataArray[3];
-
-  // Kalman filter input is position and acceleration, array is blank to be edited by kalman
-  kalmanX.runKalman(data.gpsx, data.ax, XfilteredDataArray);
-  kalmanZ.runKalman(data.gpsz, data.az, ZfilteredDataArray);
-  kalmanY.runKalman(data.gpsAltitude, data.ay, YfilteredDataArray);
-
-  // Assign the output arrays from kalman to data
-  data.kal_X_pos = XfilteredDataArray[0];
-  data.kal_X_vel = XfilteredDataArray[1];
-  data.kal_X_accel = XfilteredDataArray[2];
-  data.kal_Z_pos = ZfilteredDataArray[0];
-  data.kal_Z_vel = ZfilteredDataArray[1];
-  data.kal_Z_accel = ZfilteredDataArray[2];
-  data.kal_Y_pos = YfilteredDataArray[0];
-  data.kal_Y_vel = YfilteredDataArray[1];
-  data.kal_Y_accel = YfilteredDataArray[2];
-  */
   
 
   data.prevNavLoopTimeMicros = data.navLoopTimeMicros;
@@ -315,4 +281,28 @@ bool isAnglePassedThreshold() {
     }
   }
   return false;
+}
+
+void runKFilter(){
+
+  float XfilteredDataArray[3];
+  float YfilteredDataArray[3];
+  float ZfilteredDataArray[3];
+
+  // Kalman filter input is position and acceleration, array is blank to be edited by kalman
+  kalmanX.updateKalman(data.gpsx, data.ax, XfilteredDataArray);
+  kalmanZ.updateKalman(data.gpsz, data.az, ZfilteredDataArray);
+  kalmanY.updateKalman(data.gpsAltitude, data.ay, YfilteredDataArray);
+
+  // Assign the output arrays from kalman to data
+  data.kal_X_pos = XfilteredDataArray[0];
+  data.kal_X_vel = XfilteredDataArray[1];
+  data.kal_X_accel = XfilteredDataArray[2];
+  data.kal_Z_pos = ZfilteredDataArray[0];
+  data.kal_Z_vel = ZfilteredDataArray[1];
+  data.kal_Z_accel = ZfilteredDataArray[2];
+  data.kal_Y_pos = YfilteredDataArray[0];
+  data.kal_Y_vel = YfilteredDataArray[1];
+  data.kal_Y_accel = YfilteredDataArray[2];
+  
 }
