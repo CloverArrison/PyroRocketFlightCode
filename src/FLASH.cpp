@@ -47,12 +47,12 @@ void myFlash::writeDataFile(File dataFile){
   char logBuffer[512]; // Smaller buffer since we aren't adding labels
 snprintf(logBuffer, sizeof(logBuffer),
     "%.2f,%.2f,%.0f,%.3f,%.2f,%.2f,%.2f,%.2f,%.2f,%.2f,%.2f,%.2f,%.2f,%.4f,%.4f,%.4f,%.4f,%.2f,%.6f,%.6f,%.0f,%.2f,%.2f,%.2f\n",
-    data.ms, data.batteryVoltage, data.fState, data.loopTime,
+    data.ms, data.batteryVoltage, data.fState, data.loopTimeMicros,
     data.ax, data.ay, data.az, 
     data.worldAx, data.worldAy, data.worldAz,
     data.gx, data.gy, data.gz,
     data.reltoglobeQ0, data.reltoglobeQ1, data.reltoglobeQ2, data.reltoglobeQ3,
-    data.baroAltitude, data.lat, data.lng, data.sats,
+    data.ASLAltitude, data.lat, data.lng, data.sats,
     data.kal_X_pos, data.kal_X_vel, data.kal_X_accel
 );
 dataFile.print(logBuffer);
@@ -74,7 +74,7 @@ void myFlash::printToSerial() {
     "Quat: [%.2f, %.2f, %.2f, %.2f]\n"
     "Attitude: Yaw: %.2f | Pitch: %.2f | Roll: %.2f\n"
     "\n[Barometer]\n"
-    "Alt: %.2f m | Bias: %.2f m\n"
+    "ASL: %.2f m | AGL: %.2f m\n"
     "\n[GPS Data]\n"
     "Lat/Lng: %.6f, %.6f | Sats: %.0f | HDOP: %.2f\n"
     "DateTime: %s %s\n"
@@ -85,14 +85,14 @@ void myFlash::printToSerial() {
     "Z: P:%.2f V:%.2f A:%.2f\n"
     "-------------------\n",
     data.ms, data.batteryVoltage, data.fState,
-    data.loopTime, data.prevLoopTime,
-    data.navLoopTime, data.prevNavLoopTime,
+    data.loopTimeMicros / 1000.0f, data.prevLoopTimeMicros / 1000.0f,
+    data.navLoopTimeMicros / 1000.0f, data.prevNavLoopTimeMicros / 1000.0f,
     data.ax, data.ay, data.az,
     data.worldAx, data.worldAy, data.worldAz,
     data.gx, data.gy, data.gz,
     data.reltoglobeQ0, data.reltoglobeQ1, data.reltoglobeQ2, data.reltoglobeQ3,
     data.magYaw, data.magPitch, data.magRoll,
-    data.baroAltitude, data.biasAltitude,
+    data.ASLAltitude, data.AGLAltitude,
     data.lat, data.lng, data.sats, data.hdop,
     data.gpsDate.c_str(), data.gpsTime.c_str(),
     data.gpsx, data.gpsz, data.gpsAltitude, data.gps_altitude_bias,
@@ -100,7 +100,6 @@ void myFlash::printToSerial() {
     data.kal_Y_pos, data.kal_Y_vel, data.kal_Y_accel,
     data.kal_Z_pos, data.kal_Z_vel, data.kal_Z_accel
 );
-
 // 3. Print to Serial
 Serial.print(buffer);
 }

@@ -11,8 +11,8 @@ static const uint8_t LM35_PIN = 0;
 #include <tinyekf.h>
 #include <Wire.h>
 
-float T = data.loopTime;
-float DT = data.loopTime - data.prevLoopTime;
+float T = data.ms;
+float DT = data.loopTimeMicros / 1000.0f;
 
 static const float EPS = 1e-4;
 
@@ -70,5 +70,4 @@ void myFilter::runKalman(float mesPos, float mesAcc, float dataOutArray[3]){
         dataOutArray[1] = _ekf.x[1];
         dataOutArray[2] = _ekf.x[2];
 }
-
 

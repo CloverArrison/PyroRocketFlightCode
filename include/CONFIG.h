@@ -1,7 +1,11 @@
 
+// This is mosty coppied so not everything does something yet
+// I want to have them as reference for what I could add
+
+
 #pragma once
 
-//pins for all of the peripherals on the Pyro Board
+//pins for all of the peripherals on the Pyro Board (SPI)
 #define radioPin A3           // LoRa radio cs
 #define buzzPin 9             // Piezoelectric buzzer
 #define flashPin A5           // Soldered flash chip
@@ -79,7 +83,7 @@
 #define GYRO_BIAS_COUNT 100
 
 #define BATTERY_VOLTAGE_MIN 3.2f // volts
-#define NAV_RATE 50000               // micro seconds
+#define NAV_RATE 50000             // micro seconds
 
 #define PARACHUTE_SERVO_DEPLOY 50
 #define PARACHUTE_SERVO_INIT 97

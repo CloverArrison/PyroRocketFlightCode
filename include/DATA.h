@@ -40,13 +40,13 @@ struct Data {
   float reltoglobeQ2;
   float reltoglobeQ3;
 
-  float baroAltitude; // meters above sea level
-  float biasAltitude; // meters above ground
+  float ASLAltitude; // meters above sea level
+  float AGLAltitude; // meters above ground
 
-  float loopTime = 0; // ms
-  float prevLoopTime = 0; // ms 
-  float navLoopTime = 0; // ms
-  float prevNavLoopTime = 0; // ms
+  float loopTimeMicros = 0; // ms
+  float prevLoopTimeMicros = 0; // ms 
+  float navLoopTimeMicros = 0; // microsecond
+  float prevNavLoopTimeMicros = 0; // microsecond
 
   State state;
   float fState;

@@ -12,6 +12,7 @@ class myBaro{
     float getBaroAlt();     // Output altitude read barometer pressure
     void baroAlt();         // Writes altitude to data
     float getBaroTemp();    // Output barometer temperature
+    void zeroBaro();
 };
  
 #endif

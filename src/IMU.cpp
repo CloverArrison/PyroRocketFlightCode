@@ -1,5 +1,7 @@
 #include "IMU.h"
+
 #include "DATA.h"
+
 #include <MadgwickAHRS.h>
 #include <Arduino.h>
 
@@ -22,15 +24,18 @@ void myIMU::IMUstart() {
     delay(10);
     }
   }
-  Serial.println("MPU6050 Found!");
-  
-  mpu.setGyroRange(MPU6050_RANGE_2000_DEG);
+
+  mpu.setGyroRange(MPU6050_RANGE_1000_DEG);
   mpu.setAccelerometerRange(MPU6050_RANGE_16_G);
-  mpu.setFilterBandwidth(MPU6050_BAND_44_HZ);
+  mpu.setFilterBandwidth(MPU6050_BAND_21_HZ);
 
+  Serial.println("MPU6050 Found! Zeroing...");
   zeroGyro();
+  Serial.println("IMU Zeroed");
+  
+  
 
-  filter.begin(18.867924528302f);
+  filter.begin(18.8679245283); // Start at 20Hz
 }
 
 //GYRO
@@ -38,22 +43,22 @@ void myIMU::getIMU() {
   // units m/s^2, rad/s, deg C
   mpu.getEvent(&a, &g, &temp);
 
-  data.gx = g.gyro.x;
-  data.gy = g.gyro.y;
-  data.gz = g.gyro.z;
+  data.gx = g.gyro.x - data.gxBias;
+  data.gy = g.gyro.y - data.gyBias;
+  data.gz = g.gyro.z - data.gzBias;
   
   data.ax = a.acceleration.x;
   data.ay = a.acceleration.y;
   data.az = a.acceleration.z;
 
-  data.accelMag = sqrt(data.ax * data.ax +data.ay * data.ay +data.az * data.az);
+  data.accelMag = sqrt(data.ax * data.ax + data.ay * data.ay +data.az * data.az);
+
   IMUfilter();
+  convertToGlobal();
 }
 
 void myIMU::zeroGyro() {
-  
-  //also need to zero gyro rates
-  const int samples = 200;
+  const int samples = 300;
   float sumX = 0, sumY = 0, sumZ = 0;
   
   for (int i = 0; i < samples; i++) {
@@ -61,20 +66,35 @@ void myIMU::zeroGyro() {
     sumX += g.gyro.x;
     sumY += g.gyro.y;
     sumZ += g.gyro.z;
-    delay(5);
+    delay(2);
   }
   
   data.gxBias = sumX / samples;
   data.gyBias = sumY / samples;
   data.gzBias = sumZ / samples;
+  
+  // data.gx -= data.gxBias;
+  // data.gy -= data.gyBias;
+  // data.gz -= data.gzBias;
+  
 }
 
 float axGrav, ayGrav, azGrav;
 float gxDeg, gyDeg, gzDeg;
 
-
 void myIMU::IMUfilter() {
-  //all work done here
+  // this might not work, the filter doesn't say this works
+  // I want to always use the best estimate of nav frequency
+  // so this gets a new frequency every loop
+  // it might not work since the examples show .begin only being for the first time the filter starts
+  // it should work becasue the begin funtion only sets the frequency without any other logic
+  // This still needs to be tested though
+
+
+  filter.begin(1000000.0f / data.navLoopTimeMicros);
+  
+  // +y is up, +x is right, +z is out from the board
+  // my roll is y, my pitch is z, my yaw is x
 
   const double EARTHGRAVACC = 9.80665;
   const double RAD2DEG = 57.29578;
@@ -88,13 +108,8 @@ void myIMU::IMUfilter() {
   gyDeg = data.gy * RAD2DEG;
   gzDeg = data.gz * RAD2DEG;
 
-
-    
-  
-  filter.updateIMU(gxDeg, gyDeg, gzDeg, axGrav, ayGrav, azGrav);
-  
-  // +y is up, +x is right, +z is out from the board
-  // my roll is y, my pitch is z, my yaw is x
+  filter.updateIMU(data.gx, data.gy, data.gz, axGrav, ayGrav, azGrav);
+  //filter.updateIMU_Rad_MPS2(data.gx, data.gy, data.gz, data.ax, data.ay, data.az);
 
   // library uses roll pitch yaw x y z, I use yaw roll pitch x y z
   // assigns to data and accounts for difference
@@ -108,9 +123,6 @@ void myIMU::IMUfilter() {
   data.reltoglobeQ1 = filter.getQ1();
   data.reltoglobeQ2 = filter.getQ2();
   data.reltoglobeQ3 = filter.getQ3();
-
-  convertToGlobal();
-
 }
 
 void myIMU::convertToGlobal(){
@@ -119,9 +131,9 @@ void myIMU::convertToGlobal(){
   float qx = data.reltoglobeQ1;
   float qy = data.reltoglobeQ2;
   float qz = data.reltoglobeQ3;
-  float ax = axGrav;
-  float ay = ayGrav;
-  float az = azGrav;
+  float ax = data.ax;
+  float ay = data.ay;
+  float az = data.az;
 
   // Uses the quaternion to rotate the acceleration from the IMU to a global reference frame
   data.worldAx = ax * (1.0f - 2.0f * qy * qy - 2.0f * qz * qz) +

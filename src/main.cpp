@@ -1,10 +1,3 @@
-
-// ^ Library includes
-#include <Arduino.h>
-#include <Wire.h>
-#include <Chrono.h>
-
-// ^ My includes
 #include "IMU.h" 
 #include "BARO.h"
 #include "GPS.h"
@@ -17,9 +10,11 @@
 #include "CONFIG.h"
 #include "BAT.h"
 
-State state;
-// ^public variables
-// float accelMag = 0;                         
+#include <Arduino.h>
+#include <Wire.h>
+#include <Chrono.h>
+
+
 bool flashWriteStatus = false;                // Check if posable to write to flash
 bool gyroZeroStatus = false;                  // Check if gyroscope has been zeroed
 unsigned long landingDetectTime = 0;          // Running variable once landing has been triggered
@@ -30,7 +25,7 @@ unsigned long currentLoopTime;                // Resets each loop, measures loop
 
 bool firstLaunchLoop = true;                  // Is this the first loop in the launch commanded state    
 bool firstAbortLoop = true;                   // Is this the first loop in the aborted state
-// unsigned long abortLoopTime = 0;            // Unused
+// unsigned long abortLoopTime = 0;           // Unused
 
 float firstPow = 0;                           // Is this the first loop in the powered assent state
 float powStart = 0;                           // Measured time since powered assent start
@@ -39,75 +34,91 @@ bool isGPS0 = false;                          // Check if GPS has been zeroed
 
 int mainSerialRate(115200);
 
-// ^class objects
-myIMU imu;                      // mpu object
-myBaro barometer;               // baro object
-myGPS gps;                      // GPS object
-myFlash flash(flashPin);        // Flash object
-myFlash sd(sdPin);              // SD object
-myFilter filt;                  // Kalman filter object
-myLoRa lora(radioPin);          // Lora object
-myBuzz buzz(buzzPin);           // Buzz object
-myBat bat(voltPin);             // Battery object
-myFilter kalmanX;               // Kalman divided between axis
-myFilter kalmanY;               // Y-axis is up
+
+myIMU imu;                      // mpu6050 inertial measurement unit 
+myBaro barometer;               // MPL3115A2 barometer
+myGPS gps;                      // Adafruit GPS feateherwing
+
+myFlash flash(flashPin);        // Flash object (soldered connection)
+myFlash sd(sdPin);              // SD object (microSD card slot)
+
+myLoRa lora(radioPin);          // Adafruit LoRa radio
+myBuzz buzz(buzzPin);           // Buzzer
+myBat bat(voltPin);             // Battery voltage divider
+
+myFilter Kfilter;               // Kalman filter object
+myFilter kalmanX;               // Kalman divided between axis -- Y-axis is up
+myFilter kalmanY;          
 myFilter kalmanZ;
 
-Chrono navTimer(Chrono::MICROS, false);                // Find nav timing (loop timeing)
-Chrono loopTimer;
+Chrono navTimerMicros(Chrono::MICROS, false);                // Tracks sensor time steps
+Chrono loopTimerMicros(Chrono::MICROS, false);                     // Tracks main loop time steps
+State state;
 
-// ^ My functions
+
 void handleNav();               // runs sensors logging, radio and state switching
-bool isAnglePassedThreshold();  // checks if need to abort
+bool isAnglePassedThreshold();  // checks if need to abort if the rocket tips over
 
-// Set up sensors, output, Serial. Also inti states then switch to idle
+
+
 void setup() {
-  delay(1000);                    // Wait for feather to power on
+
+  delay(500); //hey wake up!        // Wait for feather to power on
   goToState(INITIALIZING);
 
-  Serial.begin(mainSerialRate);           // main serial rate
+  Serial.begin(mainSerialRate);           
   while (!Serial);
   Serial.print("Serial Rate: ");
   Serial.println(mainSerialRate);
-  gps.GPSstart();                 // gps setup
-  imu.IMUstart();                 // mpu setup
-  barometer.baroStart();          // baro setup
-  //sd.flashSetup("SD");            // sd setup
-  //flash.flashSetup("Flash");      // Flash setup  // might be an error here?
-  lora.LoRaStart();               // Radio setup
 
-  kalmanX.startKalman();          // kalman setup 
+  gps.GPSstart();                 
+  imu.IMUstart();                 
+  barometer.baroStart();          
+  //sd.flashSetup("SD");            
+  //flash.flashSetup("Flash");      
+  lora.LoRaStart();               
+
+  kalmanX.startKalman();          
   kalmanY.startKalman();
   kalmanZ.startKalman();
   
-  // Read loop times
+  // loop times, will get reset each loop DT
   prevLoopTime = 0;       
   currentLoopTime = micros();     
+
 
   // End setup choose state
   if (IS_TEST_MODE) {
     goToState(TEST);
     Serial.println("Going to test mode");
-  } else {
+  } 
+  else {
     goToState(IDLE);
     Serial.println("Going to idle mode");
-
   }
   
-  loopTimer.start();
-  navTimer.start();
+  loopTimerMicros.start();
+  navTimerMicros.start();
   Serial.println("end init");
 
   Serial.println("-------------------------------------------------------------------------");
 }
 
 void loop() {
-  //Serial.println("loop");
-  handleNav();                  // Get all sensor data, run filters, Check battery, run loop times
-  //sd.handleWriteFlash();      
-  //handleEUI();
-  //handleTransmit();
 
+  //Serial.println("loop");
+  
+  if (navTimerMicros.hasPassed(NAV_RATE)) handleNav(); 
+
+                   // Get all sensor data, run filters, Check battery, run loop times
+  //sd.handleWriteFlash();      // no SD card, so this is commented out (would bne good to have this be a settng in config for if the SD card is present or not)
+  
+  // Future additons 
+  // handleEUI();
+  // handleTransmit();
+
+
+  // Handles switching between modes for different stages of ascent, descent, and landing
   switch (data.state) {
     case INITIALIZING:  // should never be here, should switch out before
       {
@@ -240,44 +251,32 @@ void loop() {
       }
   }
   
-  float prevMillis = data.ms;
+  
   data.ms = millis();
-  data.prevLoopTime = data.loopTime;
-  data.loopTime = data.ms - prevMillis;
 
-  loopTimer.restart();
+  data.prevLoopTimeMicros = data.loopTimeMicros;
+  data.loopTimeMicros = loopTimerMicros.elapsed();
+  loopTimerMicros.restart();
 }
 
 void handleNav() {
+  imu.getIMU();
+  //barometer.baroAlt();
 
-  // get all data and write to data struct
+  if(gps.isFix()){
+    Serial.print("GPS get");
+    gps.GPSaltitude();
+    gps.GPSx();
+    gps.GPSz();
+    gps.GPSlat();
+    gps.GPSlon();
+    gps.GPSsats();
+  }
   
-  if (navTimer.hasPassed(NAV_RATE)) { 
-    data.prevNavLoopTime = data.navLoopTime;
-    data.navLoopTime = navTimer.elapsed();
-    imu.getIMU();
-    if(gps.isFix()){
-      gps.GPSaltitude();
-      gps.GPSx();
-      gps.GPSz();
-      gps.GPSlat();
-      gps.GPSlon();
-      gps.GPSsats();
-    }
-    
-    // ^isnt getting passes get baro alt this needs to be fixed
-    //barometer.baroAlt();
 
-    
-    sd.printToSerial();   // Prints formatted data to serial
+  // bat.handleBatteryCheck();  // bat voltage from the voltage divider 
 
-
-    // bat.handleBatteryCheck();  // bat voltage
-
-    
-
-  //imu.IMUfilter();  // Take in raw imu data output the filtered attitude
-
+  /*
   // Arrays for the output of kalman filter, blank to start
   float XfilteredDataArray[3];
   float YfilteredDataArray[3];
@@ -298,10 +297,15 @@ void handleNav() {
   data.kal_Y_pos = YfilteredDataArray[0];
   data.kal_Y_vel = YfilteredDataArray[1];
   data.kal_Y_accel = YfilteredDataArray[2];
+  */
+  
 
-  navTimer.restart();
+  data.prevNavLoopTimeMicros = data.navLoopTimeMicros;
+  data.navLoopTimeMicros = navTimerMicros.elapsed();
+  navTimerMicros.restart();
+  sd.printToSerial();   // Prints formatted data to serial
+  
   }
-}
 
 // Only run  in pow ascent
 bool isAnglePassedThreshold() {

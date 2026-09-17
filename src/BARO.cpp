@@ -1,9 +1,10 @@
 #include "BARO.h"
 Adafruit_MPL3115A2 baro;
 
-float seaLevelPressure = 1013.26; //needs config
+const float seaLevelPressure =  1028.0; // hPa //needs config
+float startingAltitude;
 myBaro::myBaro(){}; //emtpy constructor
-
+\
 void myBaro::baroStart(){
   //waits until baro has started to continue
   if(!baro.begin()){
@@ -11,18 +12,33 @@ void myBaro::baroStart(){
     while(1){delay(10);};
   }
   delay(10);
+  baro.setMode(MPL3115A2_ALTIMETER);
 
-  //these don't work for some reason, so we will just fix it later
-  //baro.setAltitudeOffset(baro.getAltitude()); // zero barometer
-  //baro.setSeaPressure(baro.getAltitude());
-  
-  Serial.println("Baro setup done");
+  Serial.println("Barometer started. Zeroing...");
+  zeroBaro();
+  Serial.println("Barometer Zeroed");
+  Serial.println("Barometer setup done");
+};
+
+void myBaro::zeroBaro(){
+  baro.setSeaPressure(seaLevelPressure);
+  const int samples = 1;
+  float sumAlt = 0;
+  for (int i = 0; i < samples; i++) {
+    sumAlt += baro.getAltitude();
+    
+    delay(5);
+    
+  }
+  startingAltitude = sumAlt/samples;
+
 };
 
 //returns pressure
 float myBaro::getBaroPress(){
   return baro.getPressure();
 };
+
 
 //returns altitude
 float myBaro::getBaroAlt(){
@@ -31,7 +47,14 @@ float myBaro::getBaroAlt(){
 
 //updates data with altitude
 void myBaro::baroAlt(){
-  data.baroAltitude = baro.getAltitude();
+  
+  
+
+  data.ASLAltitude = baro.getAltitude();
+  data.AGLAltitude = data.ASLAltitude - startingAltitude;
+
+
+
   return;
 };
 

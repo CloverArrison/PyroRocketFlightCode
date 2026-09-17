@@ -93,8 +93,8 @@ float Adafruit_MPL3115A2::getAltitude() {
   if (currentMode != MPL3115A2_ALTIMETER)
     setMode(MPL3115A2_ALTIMETER);
   startOneShot();
-  while (!conversionComplete())
-    delay(10);
+  while(!conversionComplete())  delay(10);
+  
   return getLastConversionResults(MPL3115A2_ALTITUDE);
 }
 
